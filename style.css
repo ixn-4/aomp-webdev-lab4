@@ -75,6 +75,7 @@ body {
 .subtitle {
   font-size: clamp(0.95rem, 1.2vw, 1rem);
   color: var(--text-gray);
+  margin-left: 4px;
 }
 
 /*--------------------FORM SECTION--------------------*/
@@ -132,7 +133,7 @@ body {
   border: none;
   padding: 1.1rem 2rem;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;

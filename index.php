@@ -167,7 +167,7 @@
           <div class="modal-header-left">
             <span class="modal-supertitle">EDIT LIST</span>
             <div class="modal-title-box">
-              <input type="text" class="modal-title-input" name="list_name" value="COMP 001" required>
+              <input type="text" class="modal-title-input" name="list_name" value="COMP 018" required>
               <span class="modal-progress">1 of 5 done</span>
             </div>
           </div>

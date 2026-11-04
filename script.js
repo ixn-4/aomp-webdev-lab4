@@ -25,6 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener('click', (e) => {
     const pinBtn = e.target.closest('.pin-list');
     if (pinBtn) {
+      e.preventDefault(); 
+      
       const card = pinBtn.closest('.list-card');
       const pinnedContainer = document.getElementById('pinned-container');
       const myListsContainer = document.getElementById('my-lists-container');
