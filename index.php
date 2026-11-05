@@ -1,3 +1,48 @@
+<?php
+session_start();
+
+// Initialize lists array if it doesn't exist
+if (!isset($_SESSION['lists'])) {
+    $_SESSION['lists'] = [];
+}
+
+$error_message = "";
+$success_message = "";
+
+// Check if the form was submitted via POST
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
+    if ($_POST['action'] === 'create_list') {
+        // 1. Extract and Trim (Empty validation)
+        $list_name = trim($_POST['list_name']);
+
+        if (empty($list_name)) {
+            $error_message = "List name cannot be empty.";
+        } else {
+            // 2. Duplicate validation
+            $is_duplicate = false;
+            foreach ($_SESSION['lists'] as $existing_list) {
+                if (strtolower($existing_list['name']) === strtolower($list_name)) {
+                    $is_duplicate = true;
+                    break;
+                }
+            }
+
+            if ($is_duplicate) {
+                $error_message = "A list with this name already exists.";
+            } else {
+                // 3. Create and Save
+                $_SESSION['lists'][] = [
+                    'id' => uniqid(),
+                    'name' => htmlspecialchars($list_name), // Security!
+                    'tasks' => []
+                ];
+                $success_message = "List created successfully!";
+            }
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,12 +69,23 @@
 
     <!----------------------FORM SECTION---------------------->
     <section class="form-section">
+       <?php if ($error_message): ?>
+          <div style="color: #d32f2f; background: #ffebee; padding: 10px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #d32f2f;">
+              <?php echo $error_message; ?>
+          </div>
+      <?php endif; ?>
+
+      <?php if ($success_message): ?>
+          <div style="color: #2e7d32; background: #e8f5e9; padding: 10px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #2e7d32;">
+              <?php echo $success_message; ?>
+          </div>
+      <?php endif; ?>
       <!-- Hidden input for the Create action -->
       <form method="POST" action="index.php" id="create-list-form" class="create-list-form">
         <input type="hidden" name="action" value="create_list">
         <div class="input-group">
           <label for="list-name">Create a new list</label>
-          <input type="text" id="list-name" name="list_name" placeholder="Enter new list name" required>
+          <input type="text" id="list-name" name="list_name" placeholder="Enter new list name" required value="<?php echo ($error_message && isset($_POST['list_name'])) ? htmlspecialchars($_POST['list_name']) : ''; ?>">
         </div>
         <button type="submit" class="btn-primary">Create List</button>
       </form>
