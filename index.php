@@ -268,22 +268,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
 
         <div class="modal-add-task">
           <label>Add new task</label>
-         <!-- TEMPORARY FIX FOR TESTING -->
-          <form method="POST" action="index.php">
-            <input type="hidden" name="action" value="add_task">
-            <!-- Using the ID of the hardcoded COMP 018 card -->
-            <input type="hidden" name="list_id" value="placeholder_id_7"> 
-            
-            <div class="add-task-row">
-              <input type="text" name="new_task" placeholder="Enter new task">
-              <button type="submit" class="btn-primary">+ Add</button>
-            </div>
-          </form>
-          <!-- END OF TEMPORARY FIX -->
-          <!-- <div class="add-task-row">
+          <div class="add-task-row">
             <input type="text" name="new_task" placeholder="Enter new task">
             <button type="button" class="btn-primary">+ Add</button>
-          </div> -->
+          </div>
         </div>
 
         <div class="modal-tasks-container">

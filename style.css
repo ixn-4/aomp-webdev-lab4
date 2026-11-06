@@ -690,3 +690,8 @@ body {
     flex-direction: column;
   }
 }
+
+.task-item.task-done .task-text {
+  color: var(--text-light);
+  text-decoration: line-through;
+}
