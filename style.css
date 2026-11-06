@@ -1,4 +1,4 @@
-/*--------------------DESIGN TOKENS & COLOR PALETTE--------------------*/
+/* color tokens & main variables */
 :root {
   --brand-blue: #729cee;
   --brand-blue-hover: #5a85de;
@@ -39,7 +39,6 @@ body {
   margin: 0 auto; 
 }
 
-/* Icons & Images styling */
 .brand-logo {
   width: 56px;
   height: 56px;
@@ -53,7 +52,6 @@ body {
   vertical-align: middle;
 }
 
-/*--------------------HERO SECTION--------------------*/
 .hero-section {
   display: flex;
   justify-content: flex-start;
@@ -78,7 +76,6 @@ body {
   margin-left: 4px;
 }
 
-/*--------------------FORM SECTION--------------------*/
 .create-list-form {
   background: var(--card-bg);
   padding: 1.5rem 1.75rem;
@@ -148,7 +145,6 @@ body {
   transform: translateY(-2px);
 }
 
-/*--------------------LISTS SECTION & CARDS--------------------*/
 .lists-section {
   margin-bottom: 3rem;
 }
@@ -255,7 +251,7 @@ body {
   align-items: center;
 }
 
-/* Custom Checkbox Styling */
+/* custom checkboxes */
 .custom-checkbox {
   display: flex;
   align-items: center;
@@ -316,7 +312,11 @@ body {
   text-decoration: line-through;
 }
 
-/*--------------------DROPDOWN MENU--------------------*/
+.task-item.task-done .task-text {
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
 .menu-container {
   position: relative;
 }
@@ -368,7 +368,7 @@ body {
   background-color: var(--bg-color);
 }
 
-/*--------------------EDIT MODAL--------------------*/
+/* edit modal styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -529,7 +529,7 @@ body {
   color: var(--text-light);
 }
 
-/*--------------------INLINE TASK EDITING & ACTIONS--------------------*/
+/* inline subtask edit styles */
 .modal-tasks-header {
   display: flex;
   justify-content: flex-start;
@@ -613,7 +613,6 @@ body {
   padding-top: 1.5rem;
 }
 
-/*--------------------EMPTY STATE UI--------------------*/
 .empty-state {
   border: 1px dashed var(--border-medium);
   border-radius: 16px;
@@ -659,7 +658,6 @@ body {
   margin-bottom: 0.5rem;
 }
 
-/*--------------------RESPONSIVE BREAKPOINTS--------------------*/
 @media (max-width: 768px) {
   .hero-section {
     flex-direction: column;
