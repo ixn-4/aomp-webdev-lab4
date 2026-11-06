@@ -11,7 +11,7 @@
   --text-light: #9ca3af;
   
   --border-light: #f3f4f6;
-  --border-medium: #e5e7eb;
+  --border-medium: #9d9da0;
   
   --font-main: 'Inter', sans-serif;
   --container-max: 1080px;
@@ -211,6 +211,7 @@ body {
 
 .card-title {
   flex-grow: 1;
+  min-width: 0;
 }
 
 .card-title h3 {
@@ -218,8 +219,9 @@ body {
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 0.15rem;
-  text-transform: uppercase;
   letter-spacing: 0.02em;
+  word-break: break-word; 
+  overflow-wrap: anywhere;
 }
 
 .card-title span {
@@ -253,6 +255,8 @@ body {
 .task-item {
   display: flex;
   align-items: center;
+  word-break: break-word; 
+  overflow-wrap: anywhere;
 }
 
 /* Custom Checkbox Styling */
@@ -274,8 +278,8 @@ body {
 }
 
 .checkmark {
-  width: 20px;
-  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   background-color: transparent;
   border: 2px solid var(--border-medium);
   border-radius: 6px;
@@ -539,6 +543,10 @@ body {
   margin-bottom: 1rem;
 }
 
+.modal-tasks-container {
+  padding-bottom: 120px; 
+}
+
 .modal-task-list {
   list-style: none;
   display: flex;
@@ -689,4 +697,9 @@ body {
   .add-task-row {
     flex-direction: column;
   }
+}
+
+.task-item.task-done .task-text {
+  color: var(--text-light);
+  text-decoration: line-through;
 }
