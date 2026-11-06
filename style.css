@@ -211,6 +211,7 @@ body {
 
 .card-title {
   flex-grow: 1;
+  min-width: 0;
 }
 
 .card-title h3 {
@@ -218,8 +219,9 @@ body {
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 0.15rem;
-  text-transform: uppercase;
   letter-spacing: 0.02em;
+  word-break: break-word; 
+  overflow-wrap: anywhere;
 }
 
 .card-title span {
@@ -537,6 +539,10 @@ body {
   font-weight: 600;
   color: var(--text-dark);
   margin-bottom: 1rem;
+}
+
+.modal-tasks-container {
+  padding-bottom: 120px; 
 }
 
 .modal-task-list {
