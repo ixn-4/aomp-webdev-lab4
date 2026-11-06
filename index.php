@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Initialize lists array if it doesn't exist
+// start session
 if (!isset($_SESSION['lists'])) {
     $_SESSION['lists'] = [];
 }
@@ -9,16 +9,15 @@ if (!isset($_SESSION['lists'])) {
 $error_message = "";
 $success_message = "";
 
-// Check if the form was submitted via POST
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
     if ($_POST['action'] === 'create_list') {
-        // 1. Extract and Trim (Empty validation)
+        
         $list_name = trim($_POST['list_name']);
 
         if (empty($list_name)) {
             $error_message = "List name cannot be empty.";
         } else {
-            // 2. Duplicate validation
+            // checks duplicates
             $is_duplicate = false;
             foreach ($_SESSION['lists'] as $existing_list) {
                 if (strtolower($existing_list['name']) === strtolower($list_name)) {
@@ -27,16 +26,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
                 }
             }
 
+
             if ($is_duplicate) {
                 $error_message = "A list with this name already exists.";
             } else {
-                // 3. Create and Save
+                // save to session
                 $_SESSION['lists'][] = [
                     'id' => uniqid(),
-                    'name' => htmlspecialchars($list_name), // Security!
+                    'name' => htmlspecialchars($list_name),
                     'tasks' => []
                 ];
                 $success_message = "List created successfully!";
+            }
+        }
+    }
+    if ($_POST['action'] === 'add_task') {
+        $list_id = $_POST['list_id'];
+        $new_task = trim($_POST['new_task']);
+
+        if (empty($new_task)) {
+            $error_message = "Task cannot be empty.";
+        } else {
+            // Find the list
+            foreach ($_SESSION['lists'] as $key => $list) {
+                if ($list['id'] === $list_id) {
+                    $is_task_duplicate = false;
+                    foreach ($list['tasks'] as $existing_task) {
+                        if (strtolower($existing_task['task_name']) === strtolower($new_task)) {
+                            $is_task_duplicate = true;
+                            break;
+                        }
+                    }
+
+                    if ($is_task_duplicate) {
+                        $error_message = "This task already exists in this list.";
+                    } else {
+                        $_SESSION['lists'][$key]['tasks'][] = [
+                            'task_name' => htmlspecialchars($new_task),
+                            'completed' => false
+                        ];
+                        $success_message = "Task added successfully!";
+                    }
+                    break;
+                }
             }
         }
     }
@@ -236,10 +268,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
 
         <div class="modal-add-task">
           <label>Add new task</label>
-          <div class="add-task-row">
+         <!-- TEMPORARY FIX FOR TESTING -->
+          <form method="POST" action="index.php">
+            <input type="hidden" name="action" value="add_task">
+            <!-- Using the ID of the hardcoded COMP 018 card -->
+            <input type="hidden" name="list_id" value="placeholder_id_7"> 
+            
+            <div class="add-task-row">
+              <input type="text" name="new_task" placeholder="Enter new task">
+              <button type="submit" class="btn-primary">+ Add</button>
+            </div>
+          </form>
+          <!-- END OF TEMPORARY FIX -->
+          <!-- <div class="add-task-row">
             <input type="text" name="new_task" placeholder="Enter new task">
             <button type="button" class="btn-primary">+ Add</button>
-          </div>
+          </div> -->
         </div>
 
         <div class="modal-tasks-container">
