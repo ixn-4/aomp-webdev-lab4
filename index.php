@@ -41,49 +41,102 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         }
     }
 
-    if ($_POST['action'] === 'update_list') {
+    if ($_POST['action'] === 'pin_list') {
+        $list_id = $_POST['list_id'] ?? '';
+        foreach ($_SESSION['lists'] as &$list) {
+            if ($list['id'] === $list_id) {
+                $list['is_pinned'] = true;
+                $success_message = "List pinned to top!";
+                break;
+            }
+        }
+    }
+    if ($_POST['action'] === 'unpin_list') {
+        $list_id = $_POST['list_id'] ?? '';
+        foreach ($_SESSION['lists'] as &$list) {
+            if ($list['id'] === $list_id) {
+                $list['is_pinned'] = false;
+                $success_message = "List unpinned!";
+                break;
+            }
+        }
+    }
 
+    if ($_POST['action'] === 'update_list') {
         $list_id = $_POST['list_id'] ?? '';
         $list_name = trim($_POST['list_name'] ?? '');
-        
+        $submitted_tasks = $_POST['tasks'] ?? [];
+        $completed_task_ids = $_POST['completed_tasks'] ?? [];
+        $new_task_input = trim($_POST['new_task'] ?? '');
+
+        // check if user left list title blank
         if (empty($list_name)) {
             $error_message = "List name cannot be empty.";
         } else {
-            foreach ($_SESSION['lists'] as &$list) {
-                if ($list['id'] === $list_id) {
-                    $list['name'] = $list_name;
-                    
-                    $submitted_tasks = $_POST['tasks'] ?? [];
-                    $completed_task_ids = $_POST['completed_tasks'] ?? [];
-                    $updated_tasks = [];
-
-                    foreach ($submitted_tasks as $t_id => $t_name) {
-                        $clean_t_name = trim($t_name);
-                        if (empty($clean_t_name)) continue;
-
-                        $is_completed = in_array($t_id, $completed_task_ids);
-                        $updated_tasks[] = [
-                            'task_id' => $t_id,
-                            'task_name' => $clean_t_name,
-                            'completed' => $is_completed
-                        ];
-                    }
-
-                    $new_task_input = trim($_POST['new_task'] ?? '');
-                    if (!empty($new_task_input)) {
-                        $updated_tasks[] = [
-                            'task_id' => uniqid(), 
-                            'task_name' => $new_task_input, 
-                            'completed' => false
-                        ];
-                    }
-
-                    $list['tasks'] = $updated_tasks;
-                    $success_message = "List updated successfully!";
+            // check for duplicate list names (skip the one currently editing)
+            $is_duplicate = false;
+            foreach ($_SESSION['lists'] as $list) {
+                if ($list['id'] !== $list_id && strtolower($list['name']) === strtolower($list_name)) {
+                    $is_duplicate = true;
                     break;
                 }
             }
-            unset($list);
+
+            if ($is_duplicate) {
+                $error_message = "Another list with this name already exists.";
+            } else {
+                // update target list & keep existing metadata intact
+                foreach ($_SESSION['lists'] as &$list) {
+                    if ($list['id'] === $list_id) {
+                        $list['name'] = htmlspecialchars($list_name, ENT_QUOTES, 'UTF-8');
+
+                        $updated_tasks = [];
+                        $seen_task_names = [];
+
+                        // loop through submitted tasks & toggle status if checked
+                        foreach ($submitted_tasks as $t_id => $t_name) {
+                            $clean_t_name = trim($t_name);
+
+                            if (empty($clean_t_name)) continue;
+
+                            // skip dupes inside same list
+                            if (in_array(strtolower($clean_t_name), $seen_task_names)) {
+                                $error_message = "Duplicate tasks detected inside list.";
+                                continue;
+                            }
+
+                            // if id is in array = completed, else reopen task
+                            $is_completed = in_array($t_id, $completed_task_ids);
+
+                            $updated_tasks[] = [
+                                'task_id' => $t_id,
+                                'task_name' => htmlspecialchars($clean_t_name, ENT_QUOTES, 'UTF-8'),
+                                'completed' => $is_completed
+                            ];
+                            $seen_task_names[] = strtolower($clean_t_name);
+                        }
+
+                        // append new task if entered directly inside modal
+                        if (!empty($new_task_input)) {
+                            if (!in_array(strtolower($new_task_input), $seen_task_names)) {
+                                $updated_tasks[] = [
+                                    'task_id' => uniqid('t_'),
+                                    'task_name' => htmlspecialchars($new_task_input, ENT_QUOTES, 'UTF-8'),
+                                    'completed' => false
+                                ];
+                            } else {
+                                $error_message = "The new task was skipped because it's a duplicate.";
+                            }
+                        }
+
+                        $list['tasks'] = $updated_tasks;
+                        if (empty($error_message)) {
+                            $success_message = "List updated successfully!";
+                        }
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -165,15 +218,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
 
 $pinnedLists = [];
 $myLists = [];
-foreach ($_SESSION['lists'] as $list) {
+foreach ($_SESSION['lists'] as $index => $list) {
     if (!empty($list['is_pinned'])) {
-        $pinnedLists[] = $list;
+        $pinnedLists[$index] = $list;
     } else {
-        $myLists[] = $list;
+        $myLists[$index] = $list;
     }
 }
+
 uasort($pinnedLists, fn($a, $b) => strcasecmp($a['name'], $b['name']));
 uasort($myLists, fn($a, $b) => strcasecmp($a['name'], $b['name']));
+
+function getCardStats(&$tasks) {
+    if (!is_array($tasks)) { $tasks = []; }
+    $total = count($tasks);
+    $done = 0;
+    foreach ($tasks as $task) {
+        if (!empty($task['completed'])) { $done++; }
+    }
+    $percent = ($total > 0) ? round(($done / $total) * 100) : 0;
+    return ['total' => $total, 'done' => $done, 'percent' => $percent];
+}
+
 $totalAllLists = count($_SESSION['lists']);
 ?>
 
@@ -230,30 +296,27 @@ $totalAllLists = count($_SESSION['lists']);
       <section class="lists-section" id="pinned-section">
         <div class="lists-header"><div class="lists-title-area"><h2>Pinned</h2></div></div>
         <div class="lists-grid" id="pinned-container">
-          <?php foreach ($pinnedLists as $list): ?>
-            <div class="list-card" data-list='<?= json_encode($list, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG) ?>'>
+          <?php foreach ($pinnedLists as $listIndex => $list): ?>
+            <?php $stats = getCardStats($list['tasks']); ?>
+            <div class="list-card" data-list='<?= json_encode($list, JSON_HEX_APOS | JSON_HEX_QUOT) ?>'>
               <div class="card-header">
                 <div class="card-title">
                   <h3><?= htmlspecialchars($list['name']) ?></h3>
-                  <?php 
-                    $total = count($list['tasks']);
-                    $done = count(array_filter($list['tasks'], fn($t) => $t['completed']));
-                  ?>
-                  <span><?= $done ?> of <?= $total ?> done</span>
+                  <span><?= $stats['done'] ?> of <?= $stats['total'] ?> done (<?= $stats['percent'] ?>%)</span>
                 </div>
                 <div class="menu-container">
                   <button type="button" class="menu-btn"><img src="images/dots.svg" alt="Options"></button>
                   <div class="dropdown-menu">
-                    <form method="POST" style="margin: 0;">
+                    <form method="POST" action="index.php" style="margin: 0; padding: 0;">
                       <input type="hidden" name="action" value="unpin_list">
-                      <input type="hidden" name="list_id" value="<?= $list['id'] ?>">
-                      <button type="submit" class="dropdown-item pin-list" style="width: 100%;"><img src="images/unpin.svg" class="icon-sm"> Unpin</button>
+                      <input type="hidden" name="list_id" value="<?= htmlspecialchars($list['id']) ?>">
+                      <button type="submit" class="dropdown-item pin-list" style="width: 100%;"><img src="images/unpin.svg" alt="Unpin" class="icon-sm"> Unpin</button>
                     </form>
-                    <button type="button" class="dropdown-item edit-list" style="width: 100%;"><img src="images/edit.svg" class="icon-sm"> Edit</button>
-                    <form method="POST" style="margin: 0;" onsubmit="return confirm('Delete this list?');">
+                    <button type="button" class="dropdown-item edit-list" style="width: 100%;"><img src="images/edit.svg" alt="Edit" class="icon-sm"> Edit</button>
+                    <form method="POST" action="index.php" style="margin: 0; padding: 0;" onsubmit="return confirm('Delete this list?');">
                       <input type="hidden" name="action" value="delete_list">
-                      <input type="hidden" name="list_id" value="<?= $list['id'] ?>">
-                      <button type="submit" class="dropdown-item delete-list" style="width: 100%;"><img src="images/delete.svg" class="icon-sm"> Delete</button>
+                      <input type="hidden" name="list_id" value="<?= htmlspecialchars($list['id']) ?>">
+                      <button type="submit" class="dropdown-item delete-list" style="width: 100%;"><img src="images/delete.svg" alt="Delete" class="icon-sm"> Delete</button>
                     </form>
                   </div>
                 </div>
@@ -298,15 +361,12 @@ $totalAllLists = count($_SESSION['lists']);
 
         <div class="lists-grid <?= ($totalAllLists === 0) ? 'hidden' : '' ?>" id="my-lists-container">
           <?php foreach ($myLists as $list): ?>
+            <?php $stats = getCardStats($list['tasks']); ?>
             <div class="list-card" data-list='<?= json_encode($list, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG) ?>'>
               <div class="card-header">
                 <div class="card-title">
                   <h3><?= htmlspecialchars($list['name']) ?></h3>
-                  <?php 
-                    $total = count($list['tasks']);
-                    $done = count(array_filter($list['tasks'], fn($t) => $t['completed']));
-                  ?>
-                  <span><?= $done ?> of <?= $total ?> done</span>
+                  <span><?= $stats['done'] ?> of <?= $stats['total'] ?> done (<?= $stats['percent'] ?>%)</span>
                 </div>
                 <div class="menu-container">
                   <button type="button" class="menu-btn"><img src="images/dots.svg" alt="Options"></button>
